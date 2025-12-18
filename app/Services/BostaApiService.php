@@ -32,6 +32,11 @@ class BostaApiService {
 
     // Track shipment
     public function getDelivery($trackingNumber) {
-        return $this->makeRequest('get', "/deliveries/{$trackingNumber}");
+        return $this->makeRequest('get', "/deliveries/business/{$trackingNumber}");
+    }
+
+    // Update delivery by tracking number
+    public function updateDelivery($trackingNumber, array $data) {
+        return $this->makeRequest('put', "/deliveries/business/{$trackingNumber}", $data);
     }
 }

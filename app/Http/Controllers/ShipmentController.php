@@ -59,29 +59,61 @@ class ShipmentController extends Controller
         // API Call
         $response = $bosta->createDelivery($payload);
 
-        dd($response);
 
         // Save to DB
         Order::create([
-            'tracking_number' => $response['trackingNumber'],
+            'tracking_number' => $response['data']['trackingNumber'],
             'status' => 'created',
         ]);
 
-        return redirect('/')->with('success', 'Shipment created! Tracking: ' . $response['trackingNumber']);
+        return response()->json([
+            'success' => true,
+            'tracking_number' => $response['data']['trackingNumber'],
+            'message' => 'Shipment created successfully'
+        ]);
     }
 
-    public function track(Request $request, BostaApiService $bosta)
+    public function track($tracking_number, BostaApiService $bosta)
     {
-        $request->validate(['tracking_number' => 'required']);
-
-        $response = $bosta->getDelivery($request->tracking_number);
+        $response = $bosta->getDelivery($tracking_number);
 
         // Update DB if needed
-        $order = Order::where('tracking_number', $request->tracking_number)->first();
+        $order = Order::where('tracking_number', $tracking_number)->first();
         if ($order) {
-            $order->update(['status' => $response['state']['status']]);
+            $order->update(['status' => $response['data']['state']['value']]);
         }
 
-        return view('track-result', ['data' => $response]);
+        return response()->json($response);
+    }
+
+    public function update(Request $request, $tracking_number, BostaApiService $bosta)
+    {
+        $request->validate([
+            'status' => 'nullable|string',
+            'notes' => 'nullable|string',
+            // Add other updatable fields as needed
+        ]);
+
+        $payload = [];
+        if ($request->status) {
+            $payload['status'] = $request->status;
+        }
+        if ($request->notes) {
+            $payload['notes'] = $request->notes;
+        }
+
+        $response = $bosta->updateDelivery($tracking_number, $payload);
+
+        // Update DB if needed
+        $order = Order::where('tracking_number', $tracking_number)->first();
+        if ($order && isset($payload['status'])) {
+            $order->update(['status' => $payload['status']]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Shipment updated successfully',
+            'data' => $response
+        ]);
     }
 }
