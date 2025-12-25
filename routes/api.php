@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\ShipmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ShipmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,3 +22,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('/shipments', [ShipmentController::class, 'create']);
 Route::get('/shipments/{tracking_number}', [ShipmentController::class, 'track']);
 Route::put('/shipments/{tracking_number}', [ShipmentController::class, 'update']);
+Route::post('/pickups', [ShipmentController::class, 'createPickup']);
+Route::post('/webhook/bosta', [App\Http\Controllers\BostaWebhookController::class, 'handle']);

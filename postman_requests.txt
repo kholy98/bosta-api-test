@@ -1,0 +1,127 @@
+# Postman Requests for Testing Bosta Shipping Flow
+
+## Base URL
+http://localhost:8000/api
+
+## 1. Create Shipment
+**Method:** POST  
+**Endpoint:** /shipments  
+**Headers:**  
+Content-Type: application/json  
+
+**Body (raw JSON):**  
+{
+  "receiver_first_name": "John",
+  "receiver_last_name": "Doe",
+  "receiver_phone": "+201234567890",
+  "receiver_email": "john@example.com",
+  "building_number": 123,
+  "floor": 1,
+  "apartment": "4A",
+  "first_line": "123 Main St",
+  "city": "EG-01",
+  "zone": "Cairo",
+  "notes": "Test shipment",
+  "cod": 100.00,
+  "business_reference": "TEST-001"
+}
+
+**Expected Response:**  
+{
+  "success": true,
+  "tracking_number": "BOSTA_TRACKING_123",
+  "message": "Shipment created successfully"
+}
+
+## 2. Simulate Webhook Update (Pickup Requested)
+**Method:** POST  
+**Endpoint:** /webhook/bosta  
+**Headers:**  
+Content-Type: application/json  
+
+**Body (raw JSON):**  
+{
+  "trackingNumber": "BOSTA_TRACKING_123",
+  "state": 10,
+  "timeStamp": 1640995200000,
+  "_id": "bosta_id_123",
+  "type": 10,
+  "cod": 100.00,
+  "businessReference": "TEST-001"
+}
+
+**Expected Response:**  
+{
+  "status": "ok"
+}
+
+## 3. Simulate Webhook Update (In Transit)
+**Method:** POST  
+**Endpoint:** /webhook/bosta  
+**Headers:**  
+Content-Type: application/json  
+
+**Body (raw JSON):**  
+{
+  "trackingNumber": "BOSTA_TRACKING_123",
+  "state": 30,
+  "timeStamp": 1640995300000,
+  "exceptionReason": null,
+  "numberOfAttempts": 0
+}
+
+**Expected Response:**  
+{
+  "status": "ok"
+}
+
+## 4. Simulate Webhook Update (Delivered)
+**Method:** POST  
+**Endpoint:** /webhook/bosta  
+**Headers:**  
+Content-Type: application/json  
+
+**Body (raw JSON):**  
+{
+  "trackingNumber": "BOSTA_TRACKING_123",
+  "state": 45,
+  "timeStamp": 1640995400000,
+  "isConfirmedDelivery": true,
+  "deliveryPromiseDate": "2025-12-22"
+}
+
+**Expected Response:**  
+{
+  "status": "ok"
+}
+
+## 5. Track Shipment
+**Method:** GET  
+**Endpoint:** /shipments/{tracking_number}  
+**Replace {tracking_number} with actual tracking number from step 1**  
+
+**Headers:**  
+None required  
+
+**Expected Response:**  
+{
+  "data": {
+    "trackingNumber": "BOSTA_TRACKING_123",
+    "state": {
+      "status": "Delivered",
+      "value": 45,
+      "location": "Delivered to recipient",
+      "timestamp": "2022-01-01T00:00:00.000Z"
+    },
+    "receiver": {...},
+    "dropOffAddress": {...},
+    ...
+  }
+}
+
+## Notes
+- Replace "BOSTA_TRACKING_123" with the actual tracking number returned from the create request.
+- For webhook simulation, use different state codes from the STATE_MAPPING in BostaWebhookController.php (e.g., 10=pickup_requested, 20=route_assigned, 30=in_transit, 45=delivered).
+- Ensure your Laravel server is running on localhost:8000.
+- If using real Bosta API, set BOSTA_API_KEY in .env; otherwise, webhooks will update DB but tracking may fail on API call.
+- For web interface testing, use browser at http://localhost:8000/create-shipment and http://localhost:8000/track-shipment.

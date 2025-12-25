@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ShipmentController;
 use App\Http\Controllers\BostaWebhookController;
+use App\Http\Controllers\ShipmentController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -15,4 +15,3 @@ Route::get('/track-shipment', function () {
 });
 Route::post('/shipments', [ShipmentController::class, 'create']);
 Route::post('/track', [ShipmentController::class, 'track']);
-Route::post('/webhook/bosta', [BostaWebhookController::class, 'handle'])->withoutMiddleware(['csrf']);
